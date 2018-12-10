@@ -63,16 +63,19 @@ void ASCharacter::BeginPlay()
 			Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), WeaponSocketName);
 		}
 	}
-	
+
 	//Bind Input for the weapon
-	if (Gun->GetClass()->GetName().Contains("Rifle") && IsPlayerControlled())
+	if (ThisPawnsInputComponent)
 	{
-		InputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::StartFire);
-		InputComponent->BindAction("Fire", IE_Released, this, &ASCharacter::StopFire);
-	}
-	else if (IsPlayerControlled())
-	{
-		InputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::PullTrigger);
+		if (Gun->GetClass()->GetName().Contains("Rifle") && IsPlayerControlled())
+		{
+			ThisPawnsInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::StartFire);
+			ThisPawnsInputComponent->BindAction("Fire", IE_Released, this, &ASCharacter::StopFire);
+		}
+		else if (IsPlayerControlled())
+		{
+			ThisPawnsInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::PullTrigger);
+		}
 	}
 
 	DefaultFOV = CameraComp->FieldOfView;
@@ -194,6 +197,9 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	//Set this to be used by begin play to assign control to the input component
+	ThisPawnsInputComponent = PlayerInputComponent; 
+
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASCharacter::MoveRight);
 
@@ -209,6 +215,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAction("Zoom", IE_Released, this, &ASCharacter::ZoomOut);
 
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ASCharacter::StartReload);
+
+	
 
 }
 

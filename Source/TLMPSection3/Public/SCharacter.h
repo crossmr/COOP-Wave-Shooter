@@ -106,5 +106,7 @@ protected:
 	
 	FTimerHandle TimerHandle_TimeToReload;
 
+	UInputComponent* ThisPawnsInputComponent;
+
 	
 };
