@@ -15,6 +15,8 @@
 #include "Components/CapsuleComponent.h"
 #include "TLMPSection3.h"
 #include "SHealthComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "GameFramework/Controller.h"
 
 
 // Sets default values
@@ -50,39 +52,36 @@ void ASCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//Spawn a Default Weapon
-	if (GunToUse)
-	{
-		FActorSpawnParameters SpawnInfo;
-		SpawnInfo.Instigator = Instigator;
-		SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnInfo.Owner = this;
-		Gun = GetWorld()->SpawnActor<ASWeapon>(GunToUse, SpawnInfo);
-		if (Gun)
-		{
-			Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), WeaponSocketName);
-		}
-	}
-
-	//Bind Input for the weapon
-	if (ThisPawnsInputComponent)
-	{
-		if (Gun->GetClass()->GetName().Contains("Rifle") && IsPlayerControlled())
-		{
-			ThisPawnsInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::StartFire);
-			ThisPawnsInputComponent->BindAction("Fire", IE_Released, this, &ASCharacter::StopFire);
-		}
-		else if (IsPlayerControlled())
-		{
-			ThisPawnsInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::PullTrigger);
-		}
-	}
-
+	HealthComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
 	DefaultFOV = CameraComp->FieldOfView;
+	LastTimeReloaded = GetWorld()->TimeSeconds;
+
+	if (Role == ROLE_Authority)
+	{
+		//Spawn a Default Weapon
+		if (GunToUse)
+		{
+			FActorSpawnParameters SpawnInfo;
+			SpawnInfo.Instigator = Instigator;
+			SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnInfo.Owner = this;
+			Gun = GetWorld()->SpawnActor<ASWeapon>(GunToUse, SpawnInfo);
+			if (Gun)
+			{
+				Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), WeaponSocketName);
+			}
+		}
+
+	}
+
+
+
+	
+	
 
 	LastTimeReloaded = GetWorld()->TimeSeconds;
 
-	HealthComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
+	
 
 }
 
@@ -139,13 +138,49 @@ void ASCharacter::OnHealthChanged(USHealthComponent* HealthComp, float Health, f
 	}
 }
 
+void ASCharacter::Restart()
+{
+	Super::Restart();
+	
+
+	if (Role == ROLE_Authority)
+	UE_LOG(LogTemp, Warning, TEXT("Running Restart"));
+	{
+		bIsAutomaticWeapon = false;
+		//Set State for weapon fire
+
+		if (Gun)
+		{
+			if (Gun->GetClass()->GetName().Contains("Rifle"))
+			{
+				bIsAutomaticWeapon = true;
+				UE_LOG(LogTemp, Warning, TEXT("Setting true in if statement"));
+
+			}
+			else
+			{
+				bIsAutomaticWeapon = false;
+				UE_LOG(LogTemp, Warning, TEXT("Setting false in if statement"));
+			}
+		}
+	}
+
+}
+
 void ASCharacter::StartFire()
 {
 	//Make sure the player isn't reloading before firing
 	if (Gun)
 	{
-		Gun->StartFire();
-		bIsFiring = true;
+		if (bIsAutomaticWeapon == true)
+		{
+			Gun->StartFire();
+			bIsFiring = true;
+		}
+		else
+		{
+			PullTrigger();
+		}
 	}
 }
 
@@ -153,8 +188,11 @@ void ASCharacter::StopFire()
 {
 	if (Gun)
 	{
-		Gun->StopFire();
-		bIsFiring = false;
+		if (bIsAutomaticWeapon)
+		{
+			Gun->StopFire();
+			bIsFiring = false;
+		}
 	}
 }
 
@@ -197,9 +235,6 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	//Set this to be used by begin play to assign control to the input component
-	ThisPawnsInputComponent = PlayerInputComponent; 
-
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASCharacter::MoveRight);
 
@@ -216,8 +251,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ASCharacter::StartReload);
 
-	
-
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ASCharacter::StartFire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ASCharacter::StopFire);
 }
 
 FVector ASCharacter::GetCameraForwardVector()
@@ -232,3 +267,10 @@ FVector ASCharacter::GetCameraLocation()
 	return CameraComp->GetComponentLocation();
 }
 
+void ASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASCharacter, Gun);
+	DOREPLIFETIME(ASCharacter, bIsAutomaticWeapon);
+}

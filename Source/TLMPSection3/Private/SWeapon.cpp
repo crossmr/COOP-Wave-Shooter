@@ -32,6 +32,8 @@ ASWeapon::ASWeapon()
 	RateOfFire = 600.0f;
 
 	MagazineSize = 30;
+
+	SetReplicates(true);
 }
 
 void ASWeapon::BeginPlay()

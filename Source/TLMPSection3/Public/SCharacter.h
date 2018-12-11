@@ -30,7 +30,7 @@ public:
 
 	FVector GetCameraLocation();
 
-	UPROPERTY(BlueprintReadOnly, Category = "Components")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Components")
 	ASWeapon* Gun;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Weapons")
@@ -106,7 +106,9 @@ protected:
 	
 	FTimerHandle TimerHandle_TimeToReload;
 
-	UInputComponent* ThisPawnsInputComponent;
+	UPROPERTY(Replicated)
+	bool bIsAutomaticWeapon;
 
+	virtual void Restart() override;
 	
 };
