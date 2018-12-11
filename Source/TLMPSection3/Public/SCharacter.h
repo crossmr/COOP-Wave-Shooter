@@ -106,9 +106,4 @@ protected:
 	
 	FTimerHandle TimerHandle_TimeToReload;
 
-	UPROPERTY(Replicated)
-	bool bIsAutomaticWeapon;
-
-	virtual void Restart() override;
-	
 };

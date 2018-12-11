@@ -31,3 +31,12 @@ void ASGrenadeLauncher::Fire()
 
 }
 
+void ASGrenadeLauncher::StopFire()
+{
+	//nothing to do but need to override parent class
+}
+
+void ASGrenadeLauncher::StartFire()
+{
+	Fire();
+}

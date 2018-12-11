@@ -74,14 +74,7 @@ void ASCharacter::BeginPlay()
 
 	}
 
-
-
-	
-	
-
 	LastTimeReloaded = GetWorld()->TimeSeconds;
-
-	
 
 }
 
@@ -103,11 +96,6 @@ void ASCharacter::BeginCrouch()
 void ASCharacter::EndCrouch()
 {
 	UnCrouch();
-}
-
-void ASCharacter::PullTrigger()
-{
-	Gun->Fire();
 }
 
 void ASCharacter::ZoomIn()
@@ -138,49 +126,13 @@ void ASCharacter::OnHealthChanged(USHealthComponent* HealthComp, float Health, f
 	}
 }
 
-void ASCharacter::Restart()
-{
-	Super::Restart();
-	
-
-	if (Role == ROLE_Authority)
-	UE_LOG(LogTemp, Warning, TEXT("Running Restart"));
-	{
-		bIsAutomaticWeapon = false;
-		//Set State for weapon fire
-
-		if (Gun)
-		{
-			if (Gun->GetClass()->GetName().Contains("Rifle"))
-			{
-				bIsAutomaticWeapon = true;
-				UE_LOG(LogTemp, Warning, TEXT("Setting true in if statement"));
-
-			}
-			else
-			{
-				bIsAutomaticWeapon = false;
-				UE_LOG(LogTemp, Warning, TEXT("Setting false in if statement"));
-			}
-		}
-	}
-
-}
-
 void ASCharacter::StartFire()
 {
 	//Make sure the player isn't reloading before firing
 	if (Gun)
 	{
-		if (bIsAutomaticWeapon == true)
-		{
-			Gun->StartFire();
-			bIsFiring = true;
-		}
-		else
-		{
-			PullTrigger();
-		}
+		Gun->StartFire();
+		bIsFiring = true;
 	}
 }
 
@@ -188,11 +140,8 @@ void ASCharacter::StopFire()
 {
 	if (Gun)
 	{
-		if (bIsAutomaticWeapon)
-		{
-			Gun->StopFire();
-			bIsFiring = false;
-		}
+		Gun->StopFire();
+		bIsFiring = false;		
 	}
 }
 
@@ -272,5 +221,4 @@ void ASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ASCharacter, Gun);
-	DOREPLIFETIME(ASCharacter, bIsAutomaticWeapon);
 }

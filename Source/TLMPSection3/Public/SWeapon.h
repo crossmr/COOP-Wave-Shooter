@@ -23,9 +23,12 @@ public:
 
 	virtual void Fire();
 
-	void StopFire();
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerFire();
 
-	void StartFire();
+	virtual void StopFire();
+
+	virtual void StartFire();
 
 	void Reload();
 

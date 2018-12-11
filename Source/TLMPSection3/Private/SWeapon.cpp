@@ -48,8 +48,15 @@ void ASWeapon::BeginPlay()
 
 void ASWeapon::Fire()
 {
-	//trace from pawn eyes to crosshair location
 	if (CurrentNumberOfBullets == 0) { return; }
+	CurrentNumberOfBullets = CurrentNumberOfBullets - 1;
+	if (Role < ROLE_Authority)
+	{
+		ServerFire();
+		//return;
+	}
+	//trace from pawn eyes to crosshair location
+	
 
 	AActor* MyOwner = GetOwner();
 	if (MyOwner)
@@ -127,7 +134,7 @@ void ASWeapon::Fire()
 
 		LastFiredTime = GetWorld()->TimeSeconds;
 
-		CurrentNumberOfBullets = CurrentNumberOfBullets - 1;
+		
 	}
 	
 }
@@ -142,6 +149,16 @@ void ASWeapon::StartFire()
 void ASWeapon::Reload()
 {
 	CurrentNumberOfBullets = MagazineSize;
+}
+
+bool ASWeapon::ServerFire_Validate()
+{
+	return true;
+}
+
+void ASWeapon::ServerFire_Implementation()
+{
+	Fire();
 }
 
 void ASWeapon::StopFire()
