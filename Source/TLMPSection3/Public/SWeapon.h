@@ -20,7 +20,7 @@ struct FHitScanTrace
 
 public:
 	UPROPERTY()
-	FVector_NetQuantize TraceFrom;
+	TEnumAsByte<EPhysicalSurface> SurfaceType;
 
 	UPROPERTY()
 	FVector_NetQuantize TraceTo;
@@ -102,4 +102,6 @@ protected:
 
 	UFUNCTION()
 	void OnRep_HitScanTrace();
+
+	void PlayImpactsEffects(EPhysicalSurface SurfaceType, FVector ImpactPoint);
 };

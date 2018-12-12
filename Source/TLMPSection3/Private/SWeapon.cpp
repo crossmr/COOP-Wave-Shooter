@@ -36,6 +36,9 @@ ASWeapon::ASWeapon()
 	MagazineSize = 30;
 
 	SetReplicates(true);
+
+	NetUpdateFrequency = 66.0f;
+	MinNetUpdateFrequency = 33.0f;
 }
 
 void ASWeapon::BeginPlay()
@@ -52,8 +55,9 @@ void ASWeapon::OnRep_HitScanTrace()
 	//Play Cosmetic FX
 	PlayFireEffects(HitScanTrace.TraceTo);
 
-}
+	PlayImpactsEffects(HitScanTrace.SurfaceType, HitScanTrace.TraceTo);
 
+}
 
 void ASWeapon::Fire()
 {
@@ -90,6 +94,7 @@ void ASWeapon::Fire()
 		QueryParams.bReturnPhysicalMaterial = true;
 
 		FVector TracerEndPoint = TraceEnd;
+		EPhysicalSurface SurfaceType = SurfaceType_Default;
 
 		FHitResult Hit;
 		if (GetWorld()->LineTraceSingleByChannel(Hit, CameraLocation, TraceEnd, COLLISION_WEAPON, QueryParams))
@@ -97,7 +102,7 @@ void ASWeapon::Fire()
 			//Block hit, apply damage
 			AActor* HitActor = Hit.GetActor();
 
-			EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+			SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
 
 			float DamageToApply = BaseDamage;
 
@@ -107,30 +112,10 @@ void ASWeapon::Fire()
 			}
 
 			UGameplayStatics::ApplyPointDamage(HitActor, DamageToApply, ShotDirection, Hit, MyOwner->GetInstigatorController(), this, DamageType);
+
+			PlayImpactsEffects(SurfaceType, Hit.ImpactPoint);
 			TracerEndPoint = Hit.ImpactPoint;
-		
 
-			UParticleSystem* SelectedEffect = nullptr;
-			FVector ParticleScale = FVector(1.0f, 1.0f, 1.0f);
-			switch (SurfaceType)
-			{
-			case SURFACE_FLESHDEFAULT:
-				SelectedEffect = FleshImpactEffect;
-				ParticleScale = FVector(0.5f, 0.5f, 0.5f);
-				break;
-			case SURFACE_FLESHVULNERABLE:
-				SelectedEffect = FleshImpactEffect;
-				ParticleScale = FVector(0.5f, 0.5f, 0.5f);
-				break;
-			default:
-				SelectedEffect = DefaultImpactEffect;
-				break;
-			}
-
-			if (SelectedEffect)
-			{
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedEffect, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(), ParticleScale);
-			}
 			
 		}
 		//Debug line for affordance while testing
@@ -144,6 +129,8 @@ void ASWeapon::Fire()
 		if (Role == ROLE_Authority)
 		{
 			HitScanTrace.TraceTo = TracerEndPoint;
+			HitScanTrace.SurfaceType = SurfaceType;
+
 		}
 		LastFiredTime = GetWorld()->TimeSeconds;
 
@@ -208,6 +195,34 @@ void ASWeapon::PlayFireEffects(FVector TracerEndPoint)
 	}
 }
 
+void ASWeapon::PlayImpactsEffects(EPhysicalSurface SurfaceType, FVector ImpactPoint)
+{
+	UParticleSystem* SelectedEffect = nullptr;
+	FVector ParticleScale = FVector(1.0f, 1.0f, 1.0f);
+	switch (SurfaceType)
+	{
+	case SURFACE_FLESHDEFAULT:
+		SelectedEffect = FleshImpactEffect;
+		ParticleScale = FVector(0.5f, 0.5f, 0.5f);
+		break;
+	case SURFACE_FLESHVULNERABLE:
+		SelectedEffect = FleshImpactEffect;
+		ParticleScale = FVector(0.5f, 0.5f, 0.5f);
+		break;
+	default:
+		SelectedEffect = DefaultImpactEffect;
+		break;
+	}
+
+	if (SelectedEffect)
+	{
+		FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+		FVector ShotDirection = ImpactPoint - MuzzleLocation;
+		ShotDirection.Normalize();
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedEffect, ImpactPoint, ShotDirection.Rotation(), ParticleScale);
+	}
+
+}
 
 void ASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
