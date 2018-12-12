@@ -76,6 +76,7 @@ void ASWeapon::Fire()
 	{
 		ASCharacter* MyPawn = Cast<ASCharacter>(MyOwner);
 		if (MyPawn == nullptr || MyPawn->bIsReloading == true) { return; }
+		MyPawn->bIsFiring = true;
 		FVector CameraForward = MyPawn->GetCameraForwardVector();
 		FVector CameraLocation = MyPawn->GetCameraLocation();
 
@@ -161,9 +162,27 @@ void ASWeapon::ServerFire_Implementation()
 	Fire();
 }
 
+void ASWeapon::ServerStopFire_Implementation()
+{
+	StopFire();
+}
+
+bool ASWeapon::ServerStopFire_Validate()
+{
+	return true;
+}
+
 void ASWeapon::StopFire()
 {
+	if (Role < ROLE_Authority)
+	{
+		ServerStopFire();
+		//return;
+	}
 	GetWorldTimerManager().ClearTimer(TimerHandle_TimeBetweenShots);
+	ASCharacter* MyPawn = Cast<ASCharacter>(GetOwner());
+	if (MyPawn == nullptr || MyPawn->bIsReloading == true) { return; }
+	MyPawn->bIsFiring = false;
 }
 
 

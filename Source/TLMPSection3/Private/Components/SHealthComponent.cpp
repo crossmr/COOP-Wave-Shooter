@@ -3,6 +3,8 @@
 #include "SHealthComponent.h"
 #include "GameFramework/Actor.h"
 #include "Math/UnrealMathUtility.h"
+#include "Net/UnrealNetwork.h"
+
 
 
 
@@ -16,6 +18,8 @@ USHealthComponent::USHealthComponent()
 	// ...
 
 	DefaultHealth = 100.f;
+
+	SetIsReplicated(true);
 }
 
 
@@ -24,12 +28,14 @@ void USHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-
-	AActor* MyOwner = GetOwner();
-	if (MyOwner)
+	// Only do this if we are the server
+	if (GetOwnerRole() == ROLE_Authority)
 	{
-		MyOwner->OnTakeAnyDamage.AddDynamic(this, &USHealthComponent::HandleTakeAnyDamage);
+		AActor* MyOwner = GetOwner();
+		if (MyOwner)
+		{
+			MyOwner->OnTakeAnyDamage.AddDynamic(this, &USHealthComponent::HandleTakeAnyDamage);
+		}
 	}
 	
 	Health = DefaultHealth;
@@ -50,5 +56,10 @@ void USHealthComponent::HandleTakeAnyDamage(AActor * DamagedActor, float Damage,
 	//UE_LOG(LogTemp, Warning, TEXT("Damage Taken: %s"), *FString::SanitizeFloat(Health));
 }
 
+void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(USHealthComponent, Health);
+}
 

@@ -132,7 +132,7 @@ void ASCharacter::StartFire()
 	if (Gun)
 	{
 		Gun->StartFire();
-		bIsFiring = true;
+		//bIsFiring = true;
 	}
 }
 
@@ -141,7 +141,7 @@ void ASCharacter::StopFire()
 	if (Gun)
 	{
 		Gun->StopFire();
-		bIsFiring = false;		
+		//bIsFiring = false;		
 	}
 }
 
@@ -221,4 +221,7 @@ void ASCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ASCharacter, Gun);
+	DOREPLIFETIME(ASCharacter, bIsDead);
+	DOREPLIFETIME(ASCharacter, bIsFiring);
+	DOREPLIFETIME(ASCharacter, bIsReloading);
 }

@@ -33,8 +33,12 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Components")
 	ASWeapon* Gun;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Weapons")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Weapons")
 	bool bIsReloading;
+
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Pawn")
+	bool bIsFiring;
 
 protected:
 	// Called when the game starts or when spawned
@@ -55,8 +59,6 @@ protected:
 	void BeginCrouch();
 
 	void EndCrouch();
-
-	void PullTrigger();
 
 	void ZoomIn();
 
@@ -90,7 +92,7 @@ protected:
 	float ReloadTime;
 
 	//Pawn is dead
-	UPROPERTY(BlueprintReadOnly, Category = "Pawn")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Pawn")
 	bool bIsDead;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Pawn")
@@ -98,9 +100,6 @@ protected:
 	
 	//Default FOV for regular shooting
 	float DefaultFOV;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Pawn")
-	bool bIsFiring;
 
 	float LastTimeReloaded;
 	
