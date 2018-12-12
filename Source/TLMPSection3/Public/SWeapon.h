@@ -12,6 +12,21 @@ class UParticleSystem;
 class ASCharacter;
 class UCameraShake;
 
+//Contains information of a single hitscan linetrace
+USTRUCT()
+struct FHitScanTrace
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	FVector_NetQuantize TraceFrom;
+
+	UPROPERTY()
+	FVector_NetQuantize TraceTo;
+
+};
+
 UCLASS()
 class TLMPSECTION3_API ASWeapon : public AActor
 {
@@ -61,7 +76,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	UParticleSystem* TraceEffect;
 
-	void PlayFireEffects(FVector TracerEndPoint, ASCharacter* MyPawn);
+	void PlayFireEffects(FVector TracerEndPoint);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<UCameraShake> FireCamShake;
@@ -82,4 +97,9 @@ protected:
 	//Derived from rate of fire
 	float TimeBetweenShots;
 	
+	UPROPERTY(ReplicatedUsing=OnRep_HitScanTrace)
+	FHitScanTrace HitScanTrace;
+
+	UFUNCTION()
+	void OnRep_HitScanTrace();
 };

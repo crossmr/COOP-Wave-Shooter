@@ -11,6 +11,8 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "TLMPSection3.h"
 #include "TimerManager.h"
+#include "Net/UnrealNetwork.h"
+
 
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing (
@@ -43,6 +45,13 @@ void ASWeapon::BeginPlay()
 	TimeBetweenShots = 60 / RateOfFire;
 
 	CurrentNumberOfBullets = MagazineSize;
+}
+
+void ASWeapon::OnRep_HitScanTrace()
+{
+	//Play Cosmetic FX
+	PlayFireEffects(HitScanTrace.TraceTo);
+
 }
 
 
@@ -130,8 +139,12 @@ void ASWeapon::Fire()
 			DrawDebugLine(GetWorld(), MeshComp->GetSocketLocation(MuzzleSocketName), TracerEndPoint, FColor::White, false, 1.0f, 0, 1.0f);
 		}
 
-		PlayFireEffects(TracerEndPoint, MyPawn);
+		PlayFireEffects(TracerEndPoint);
 
+		if (Role == ROLE_Authority)
+		{
+			HitScanTrace.TraceTo = TracerEndPoint;
+		}
 		LastFiredTime = GetWorld()->TimeSeconds;
 
 		
@@ -168,7 +181,7 @@ void ASWeapon::StopFire()
 
 
 
-void ASWeapon::PlayFireEffects(FVector TracerEndPoint, ASCharacter* MyPawn)
+void ASWeapon::PlayFireEffects(FVector TracerEndPoint)
 {
 	if (MuzzleEffect)
 	{
@@ -184,6 +197,7 @@ void ASWeapon::PlayFireEffects(FVector TracerEndPoint, ASCharacter* MyPawn)
 		}
 	}
 
+	APawn* MyPawn = Cast<APawn>(GetOwner());
 	if (MyPawn)
 	{
 		APlayerController* PC = Cast<APlayerController>(MyPawn->GetController());
@@ -195,4 +209,10 @@ void ASWeapon::PlayFireEffects(FVector TracerEndPoint, ASCharacter* MyPawn)
 }
 
 
+void ASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ASWeapon, HitScanTrace, COND_SkipOwner);
+}
 
