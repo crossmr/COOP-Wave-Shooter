@@ -18,6 +18,7 @@ ASBarrel::ASBarrel()
 	MeshComp->SetSimulatePhysics(true);
 	MeshComp->SetCollisionObjectType(ECC_PhysicsBody);
 	SetRootComponent(MeshComp);
+	MeshComp->SetCanEverAffectNavigation(false);
 
 	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
 	HealthComp->OnHealthChanged.AddDynamic(this, &ASBarrel::OnHealthChanged);
