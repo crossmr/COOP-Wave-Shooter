@@ -48,12 +48,15 @@ public:
 
 	virtual void StartFire();
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerReload();
+
 	void Reload();
 
-	UPROPERTY(BlueprintReadOnly, Category = "Weapon")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Weapon")
 	int32 CurrentNumberOfBullets;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	int32 MagazineSize;
 
 protected:

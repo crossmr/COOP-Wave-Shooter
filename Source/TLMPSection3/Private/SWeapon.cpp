@@ -61,15 +61,15 @@ void ASWeapon::OnRep_HitScanTrace()
 
 void ASWeapon::Fire()
 {
-	if (CurrentNumberOfBullets == 0) { return; }
-	CurrentNumberOfBullets = CurrentNumberOfBullets - 1;
+	
 	if (Role < ROLE_Authority)
 	{
 		ServerFire();
 		//return;
 	}
 	//trace from pawn eyes to crosshair location
-	
+	if (CurrentNumberOfBullets == 0) { return; }
+	CurrentNumberOfBullets = CurrentNumberOfBullets - 1;
 
 	AActor* MyOwner = GetOwner();
 	if (MyOwner)
@@ -147,8 +147,21 @@ void ASWeapon::StartFire()
 		GetWorldTimerManager().SetTimer(TimerHandle_TimeBetweenShots, this, &ASWeapon::Fire, TimeBetweenShots, true, FirstDelay);
 }
 
+bool ASWeapon::ServerReload_Validate()
+{
+	return true;
+}
+void ASWeapon::ServerReload_Implementation()
+{
+	Reload();
+}
+
 void ASWeapon::Reload()
 {
+	if (Role < ROLE_Authority)
+	{
+		ServerReload();
+	}
 	CurrentNumberOfBullets = MagazineSize;
 }
 
@@ -248,5 +261,7 @@ void ASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(ASWeapon, HitScanTrace, COND_SkipOwner);
+	DOREPLIFETIME(ASWeapon, MagazineSize);
+	DOREPLIFETIME(ASWeapon, CurrentNumberOfBullets);
 }
 

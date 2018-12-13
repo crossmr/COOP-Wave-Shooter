@@ -145,8 +145,33 @@ void ASCharacter::StopFire()
 	}
 }
 
+void ASCharacter::ServerStartReload_Implementation()
+{
+	StartReload();
+}
+
+bool ASCharacter::ServerStartReload_Validate()
+{
+	return true;
+}
+
+void ASCharacter::ServerCompleteReload_Implementation()
+{
+	CompleteReload();
+}
+
+bool ASCharacter::ServerCompleteReload_Validate()
+{
+	return true;
+}
+
 void ASCharacter::CompleteReload()
 {
+	//replicate reloading animation
+	if (Role < ROLE_Authority)
+	{
+		ServerCompleteReload();
+	}
 	if (Gun)
 	{
 		//Complete the reload and allow the player to fire
@@ -157,6 +182,11 @@ void ASCharacter::CompleteReload()
 
 void ASCharacter::StartReload()
 {
+	//replicate reloading animation
+	if (Role < ROLE_Authority)
+	{
+		ServerStartReload();
+	}
 	//Check to make sure the player isn't already reloading
 	if (!bIsReloading)
 	{

@@ -27,6 +27,10 @@ protected:
 	UFUNCTION()
 	void OnHealthChanged(USHealthComponent* OwningHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
+	UFUNCTION()
+	void OnRep_Exploded();
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USHealthComponent* HealthComp;
 
@@ -49,6 +53,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<UDamageType> BarrelDamageType;
 	
+	UPROPERTY(ReplicatedUsing=OnRep_Exploded)
 	bool bExploded;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sounds")
+	USoundBase* ExplosionSound;
 	
 };

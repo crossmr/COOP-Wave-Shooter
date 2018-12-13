@@ -36,7 +36,6 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Weapons")
 	bool bIsReloading;
 
-
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Pawn")
 	bool bIsFiring;
 
@@ -53,6 +52,12 @@ protected:
 	void StopFire();
 
 	void StartReload();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerStartReload();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerCompleteReload();
 
 	void CompleteReload();
 

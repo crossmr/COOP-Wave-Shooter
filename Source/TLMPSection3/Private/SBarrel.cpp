@@ -7,6 +7,8 @@
 #include "Particles/ParticleSystem.h"
 #include "Engine/World.h"
 #include "PhysicsEngine/RadialForceComponent.h"
+#include "Net/UnrealNetwork.h"
+
 
 
 // Sets default values
@@ -18,6 +20,8 @@ ASBarrel::ASBarrel()
 	SetRootComponent(MeshComp);
 
 	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
+	HealthComp->OnHealthChanged.AddDynamic(this, &ASBarrel::OnHealthChanged);
+
 
 	RadialForceComp = CreateDefaultSubobject<URadialForceComponent>(TEXT("Radial Force Component"));
 	RadialForceComp->SetupAttachment(MeshComp);
@@ -28,6 +32,9 @@ ASBarrel::ASBarrel()
 
 	ExplosiveForce = 400;
 
+	SetReplicates(true);
+	SetReplicateMovement(true);
+
 }
 
 // Called when the game starts or when spawned
@@ -35,31 +42,22 @@ void ASBarrel::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	HealthComp->OnHealthChanged.AddDynamic(this, &ASBarrel::OnHealthChanged);
 
-	bExploded = false;
-
+	if (Role == ROLE_Authority)
+	{
+		bExploded = false;
+	}
 }
 
 void ASBarrel::OnHealthChanged(USHealthComponent * OwningHealthComp, float Health, float HealthDelta, const UDamageType * DamageType, AController * InstigatedBy, AActor * DamageCauser)
 {
+	//check to make sure the barrel isn't already exploded
 	if (Health <= 0.0f && !bExploded)
 	{
 		//explode
 
 		bExploded = true;
-
-		//Play explosion if it is set
-		if (ExplosionEffect)
-		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorLocation());
-		}
-
-		//change material if it is set
-		if (ExplodedMaterial)
-		{
-			MeshComp->SetMaterial(0, ExplodedMaterial);
-		}
+		OnRep_Exploded();
 
 		//make the barrel pop up when it explodes
 		FVector ImpulseIntensity = FVector::UpVector * ExplosiveForce;
@@ -72,5 +70,28 @@ void ASBarrel::OnHealthChanged(USHealthComponent * OwningHealthComp, float Healt
 	}
 }
 
+void ASBarrel::OnRep_Exploded()
+{
+	//check for and apply exploding effect and materials
+	if (ExplosionEffect)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorLocation());
+	}
+	if (ExplodedMaterial)
+	{
+		MeshComp->SetMaterial(0, ExplodedMaterial);
+	}
+	if (ExplosionSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ExplosionSound, GetActorLocation());
+	}
+}
 
+void ASBarrel::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASBarrel, bExploded);
+
+}
 
