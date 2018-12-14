@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "DrawDebugHelpers.h"
+#include "SHealthComponent.h"
 
 // Sets default values
 ASTrackerBot::ASTrackerBot()
@@ -18,6 +19,10 @@ ASTrackerBot::ASTrackerBot()
 	MeshComp->SetSimulatePhysics(true);
 	RootComponent = MeshComp;
 	MeshComp->SetCanEverAffectNavigation(false);
+
+	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
+	HealthComp->OnHealthChanged.AddDynamic(this, &ASTrackerBot::HandleTakeDamage);
+
 
 	bUseVelocityChange = true;
 	MovementForce = 1000.0f;
@@ -32,19 +37,29 @@ void ASTrackerBot::BeginPlay()
 
 	//Find Initial Move to
 	NextPathPoint =  GetNextPathPoint();
+	
+}
 
-	
-	
+void ASTrackerBot::HandleTakeDamage(USHealthComponent * OwningHealthComp, float Health, float HealthDelta, const UDamageType * DamageType, AController * InstigatedBy, AActor * DamageCauser)
+{
+	//Explode on death
+
+	//TODO: Pulse the material on hit
+
+	UE_LOG(LogTemp, Warning, TEXT("Health %s of %s"), *FString::SanitizeFloat(Health), *GetName())
 }
 
 FVector ASTrackerBot::GetNextPathPoint()
 {
 	ACharacter* PlayerPawn = UGameplayStatics::GetPlayerCharacter(this, 0);
-	UNavigationPath* NavPath = UNavigationSystemV1::FindPathToActorSynchronously(this, GetActorLocation(), PlayerPawn);
-	if (NavPath->PathPoints.Num() > 1)
+	if (PlayerPawn)
 	{
-		//return next point in path
-		return NavPath->PathPoints[1];
+		UNavigationPath* NavPath = UNavigationSystemV1::FindPathToActorSynchronously(this, GetActorLocation(), PlayerPawn);
+		if (NavPath->PathPoints.Num() > 1)
+		{
+			//return next point in path
+			return NavPath->PathPoints[1];
+		}
 	}
 	//return actor location if nothing else
 	return GetActorLocation();
@@ -60,7 +75,6 @@ void ASTrackerBot::Tick(float DeltaTime)
 	if (DistanceToTarget <= RequiredDistanceToTarget)
 	{
 		NextPathPoint = GetNextPathPoint();
-		UE_LOG(LogTemp, Warning, TEXT("Finding Point"));
 		DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached");
 	}
 	else
@@ -72,8 +86,6 @@ void ASTrackerBot::Tick(float DeltaTime)
 		ForceDirection *= MovementForce;
 
 		MeshComp->AddForce(ForceDirection, NAME_None, bUseVelocityChange);
-
-		UE_LOG(LogTemp, Warning, TEXT("Trying to Move"));
 
 		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + ForceDirection, 32, FColor::Yellow, false, 0.0f, 0, 1.0f);
 	}
