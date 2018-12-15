@@ -7,6 +7,7 @@
 #include "STrackerBot.generated.h"
 
 class USHealthComponent;
+class UMaterialInstanceDynamic;
 
 UCLASS()
 class TLMPSECTION3_API ASTrackerBot : public APawn
@@ -42,6 +43,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	float RequiredDistanceToTarget;
+
+	//Dynamic Material to pulse
+	UMaterialInstanceDynamic* MatInst;
 
 public:	
 	// Called every frame
