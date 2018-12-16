@@ -10,6 +10,7 @@ class USHealthComponent;
 class UMaterialInstanceDynamic;
 class UParticleSystem;
 class USphereComponent;
+class USoundCue; 
 
 UCLASS()
 class TLMPSECTION3_API ASTrackerBot : public APawn
@@ -63,7 +64,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	float ExplosionRadius;
 
-	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+	UPROPERTY(EditDefaultsOnly, Category  = "TrackerBot")
 	float ExplosionDamage;
 
 	ACharacter* TargetPawn;
@@ -73,6 +74,15 @@ protected:
 	void DamageSelf();
 
 	bool bStartedSelfDestruction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+	USoundCue* SelfDestructSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+	USoundCue* ExplodeSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
+	float SelfDamageInterval;
 
 public:	
 	// Called every frame

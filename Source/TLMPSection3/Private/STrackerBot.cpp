@@ -13,6 +13,7 @@
 #include "Components/SphereComponent.h"
 #include "SCharacter.h"
 #include "TimerManager.h"
+#include "Sound/SoundCue.h"
 
 
 // Sets default values
@@ -20,6 +21,10 @@ ASTrackerBot::ASTrackerBot()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	ExplosionDamage = 40;
+	ExplosionRadius = 200;
+	SelfDamageInterval = 0.25f;
 
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	MeshComp->SetSimulatePhysics(true);
@@ -30,7 +35,7 @@ ASTrackerBot::ASTrackerBot()
 	HealthComp->OnHealthChanged.AddDynamic(this, &ASTrackerBot::HandleTakeDamage);
 
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
-	SphereComp->SetSphereRadius(200);
+	SphereComp->SetSphereRadius(ExplosionRadius);
 	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
@@ -40,8 +45,7 @@ ASTrackerBot::ASTrackerBot()
 	MovementForce = 1000.0f;
 	RequiredDistanceToTarget = 100;
 
-	ExplosionDamage = 40;
-	ExplosionRadius = 200;
+	
 
 }
 
@@ -112,6 +116,8 @@ void ASTrackerBot::SelfDestruct()
 
 	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.0f, 0, 1.0f);
 	//Delete the actor when it explodes
+
+	UGameplayStatics::PlaySoundAtLocation(this, ExplodeSound, GetActorLocation());
 	Destroy();
 }
 
@@ -166,9 +172,11 @@ void ASTrackerBot::NotifyActorBeginOverlap(AActor * OtherActor)
 		{
 			//A player is overlapping so start countdown
 
-			GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, 0.5f, true, 0.0f);
+			GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, SelfDamageInterval, true, 0.0f);
 
 			bStartedSelfDestruction = true;
+
+			UGameplayStatics::SpawnSoundAttached(SelfDestructSound, RootComponent);
 		}
 	}
 }
