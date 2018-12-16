@@ -9,6 +9,7 @@
 class USHealthComponent;
 class UMaterialInstanceDynamic;
 class UParticleSystem;
+class USphereComponent;
 
 UCLASS()
 class TLMPSECTION3_API ASTrackerBot : public APawn
@@ -31,6 +32,9 @@ protected:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	USHealthComponent* HealthComp;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	USphereComponent* SphereComp;
 
 	FVector GetNextPathPoint();
 
@@ -62,8 +66,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TrackerBot")
 	float ExplosionDamage;
 
+	ACharacter* TargetPawn;
+
+	FTimerHandle TimerHandle_SelfDamage;
+
+	void DamageSelf();
+
+	bool bStartedSelfDestruction;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	
 };

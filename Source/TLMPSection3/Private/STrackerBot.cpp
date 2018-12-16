@@ -10,6 +10,9 @@
 #include "SHealthComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Particles/ParticleSystem.h"
+#include "Components/SphereComponent.h"
+#include "SCharacter.h"
+#include "TimerManager.h"
 
 
 // Sets default values
@@ -26,6 +29,12 @@ ASTrackerBot::ASTrackerBot()
 	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
 	HealthComp->OnHealthChanged.AddDynamic(this, &ASTrackerBot::HandleTakeDamage);
 
+	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+	SphereComp->SetSphereRadius(200);
+	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComp->SetupAttachment(RootComponent);
 
 	bUseVelocityChange = true;
 	MovementForce = 1000.0f;
@@ -69,14 +78,17 @@ void ASTrackerBot::HandleTakeDamage(USHealthComponent * OwningHealthComp, float 
 
 FVector ASTrackerBot::GetNextPathPoint()
 {
-	ACharacter* PlayerPawn = UGameplayStatics::GetPlayerCharacter(this, 0);
-	if (PlayerPawn)
+	TargetPawn = UGameplayStatics::GetPlayerCharacter(this, 0);
+	if (TargetPawn)
 	{
-		UNavigationPath* NavPath = UNavigationSystemV1::FindPathToActorSynchronously(this, GetActorLocation(), PlayerPawn);
-		if (NavPath->PathPoints.Num() > 1)
+		UNavigationPath* NavPath = UNavigationSystemV1::FindPathToActorSynchronously(this, GetActorLocation(), TargetPawn);
+		if (NavPath)
 		{
-			//return next point in path
-			return NavPath->PathPoints[1];
+			if (NavPath->PathPoints.Num() > 1)
+			{
+				//return next point in path
+				return NavPath->PathPoints[1];
+			}
 		}
 	}
 	//return actor location if nothing else
@@ -103,6 +115,11 @@ void ASTrackerBot::SelfDestruct()
 	Destroy();
 }
 
+void ASTrackerBot::DamageSelf()
+{
+	UGameplayStatics::ApplyDamage(this, 20.0f, GetInstigatorController(), this, nullptr);
+}
+
 // Called every frame
 void ASTrackerBot::Tick(float DeltaTime)
 {
@@ -110,10 +127,20 @@ void ASTrackerBot::Tick(float DeltaTime)
 
 	float DistanceToTarget = (GetActorLocation() - NextPathPoint).Size();
 
+	//Check if the target pawn is within the explosion radius and explode.
+	/*if (TargetPawn)
+	{
+		float DistanceToTargetPawn = (GetActorLocation() - TargetPawn->GetActorLocation()).Size();
+		if (DistanceToTargetPawn < ExplosionRadius)
+		{
+			SelfDestruct();
+		}
+	}*/
+
 	if (DistanceToTarget <= RequiredDistanceToTarget)
 	{
 		NextPathPoint = GetNextPathPoint();
-		DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached");
+		//DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached");
 	}
 	else
 	{
@@ -128,6 +155,22 @@ void ASTrackerBot::Tick(float DeltaTime)
 		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + ForceDirection, 32, FColor::Yellow, false, 0.0f, 0, 1.0f);
 	}
 	DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);
+}
+
+void ASTrackerBot::NotifyActorBeginOverlap(AActor * OtherActor)
+{
+	if (!bStartedSelfDestruction)
+	{
+		ASCharacter* PlayerPawn = Cast<ASCharacter>(OtherActor);
+		if (PlayerPawn)
+		{
+			//A player is overlapping so start countdown
+
+			GetWorldTimerManager().SetTimer(TimerHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, 0.5f, true, 0.0f);
+
+			bStartedSelfDestruction = true;
+		}
+	}
 }
 
 
