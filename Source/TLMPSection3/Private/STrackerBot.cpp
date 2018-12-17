@@ -54,8 +54,11 @@ void ASTrackerBot::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//Find Initial Move to
-	NextPathPoint =  GetNextPathPoint();
+	if (Role == ROLE_Authority)
+	{
+		//Find Initial Move to
+		NextPathPoint = GetNextPathPoint();
+	}
 	
 }
 
@@ -131,36 +134,39 @@ void ASTrackerBot::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	float DistanceToTarget = (GetActorLocation() - NextPathPoint).Size();
-
-	//Check if the target pawn is within the explosion radius and explode.
-	/*if (TargetPawn)
+	if (Role == ROLE_Authority)
 	{
-		float DistanceToTargetPawn = (GetActorLocation() - TargetPawn->GetActorLocation()).Size();
-		if (DistanceToTargetPawn < ExplosionRadius)
+		float DistanceToTarget = (GetActorLocation() - NextPathPoint).Size();
+
+		//Check if the target pawn is within the explosion radius and explode.
+		/*if (TargetPawn)
 		{
-			SelfDestruct();
+			float DistanceToTargetPawn = (GetActorLocation() - TargetPawn->GetActorLocation()).Size();
+			if (DistanceToTargetPawn < ExplosionRadius)
+			{
+				SelfDestruct();
+			}
+		}*/
+
+		if (DistanceToTarget <= RequiredDistanceToTarget)
+		{
+			NextPathPoint = GetNextPathPoint();
+			//DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached");
 		}
-	}*/
+		else
+		{
+			//keep moving towards next target
+			FVector ForceDirection = NextPathPoint - GetActorLocation();
+			ForceDirection.Normalize();
 
-	if (DistanceToTarget <= RequiredDistanceToTarget)
-	{
-		NextPathPoint = GetNextPathPoint();
-		//DrawDebugString(GetWorld(), GetActorLocation(), "Target Reached");
+			ForceDirection *= MovementForce;
+
+			MeshComp->AddForce(ForceDirection, NAME_None, bUseVelocityChange);
+
+			DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + ForceDirection, 32, FColor::Yellow, false, 0.0f, 0, 1.0f);
+		}
+		DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);
 	}
-	else
-	{
-		//keep moving towards next target
-		FVector ForceDirection = NextPathPoint - GetActorLocation();
-		ForceDirection.Normalize();
-
-		ForceDirection *= MovementForce;
-
-		MeshComp->AddForce(ForceDirection, NAME_None, bUseVelocityChange);
-
-		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + ForceDirection, 32, FColor::Yellow, false, 0.0f, 0, 1.0f);
-	}
-	DrawDebugSphere(GetWorld(), NextPathPoint, 20, 12, FColor::Yellow, false, 0.0f, 1.0f);
 }
 
 void ASTrackerBot::NotifyActorBeginOverlap(AActor * OtherActor)
