@@ -39,11 +39,13 @@ ASTrackerBot::ASTrackerBot()
 	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComp->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 	SphereComp->SetupAttachment(RootComponent);
 
 	bUseVelocityChange = true;
 	MovementForce = 1000.0f;
 	RequiredDistanceToTarget = 100;
+	MaxPowerLevel = 5;
 
 	
 
@@ -53,6 +55,9 @@ ASTrackerBot::ASTrackerBot()
 void ASTrackerBot::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//Instantiate the mat instance for power level and pulsating
+	MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
 
 	if (Role == ROLE_Authority)
 	{
@@ -64,14 +69,7 @@ void ASTrackerBot::BeginPlay()
 
 void ASTrackerBot::HandleTakeDamage(USHealthComponent * OwningHealthComp, float Health, float HealthDelta, const UDamageType * DamageType, AController * InstigatedBy, AActor * DamageCauser)
 {
-	//Explode on death
-
-
 	//Pulse the material on hit
-	if (MatInst == nullptr)
-	{
-		MatInst = MeshComp->CreateAndSetMaterialInstanceDynamicFromMaterial(0, MeshComp->GetMaterial(0));
-	}
 	if (MatInst)
 	{
 		MatInst->SetScalarParameterValue("LastTimeDamageTaken", GetWorld()->TimeSeconds);
@@ -120,9 +118,9 @@ void ASTrackerBot::SelfDestruct()
 	{
 		TArray<AActor*> IgnoredActors;
 		IgnoredActors.Add(this);
-
+		float DamageToApply = ExplosionDamage + (PowerLevel * ExplosionDamage);
 		//Apply damage on explosion
-		UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
+		UGameplayStatics::ApplyRadialDamage(this, DamageToApply, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this, GetInstigatorController(), true);
 
 		DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.0f, 0, 1.0f);
 		//Delete the actor when it explodes
@@ -141,8 +139,25 @@ void ASTrackerBot::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//Check if any bots are nearby
+	TArray<AActor*> NearbyTrackerBots;
+	GetOverlappingActors(NearbyTrackerBots, ASTrackerBot::StaticClass());
+
+	//Set Power level to number of nearby bots and clamp to max
+	PowerLevel = NearbyTrackerBots.Num();
+
+	FMath::Clamp(PowerLevel, 0.0f, MaxPowerLevel);
+	float Alpha = PowerLevel / MaxPowerLevel;
+	//Set material to pulse per number of nearby bots
+	if (MatInst)
+	{
+		MatInst->SetScalarParameterValue("PowerLevelAlpha", Alpha);
+	}
+
 	if (Role == ROLE_Authority && !bExploded)
 	{
+
+
 		float DistanceToTarget = (GetActorLocation() - NextPathPoint).Size();
 
 		//Check if the target pawn is within the explosion radius and explode.
