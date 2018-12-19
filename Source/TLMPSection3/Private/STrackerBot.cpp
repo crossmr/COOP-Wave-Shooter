@@ -112,6 +112,7 @@ void ASTrackerBot::SelfDestruct()
 	UGameplayStatics::PlaySoundAtLocation(this, ExplodeSound, GetActorLocation());
 
 	MeshComp->SetVisibility(false, true);
+	MeshComp->SetSimulatePhysics(false);
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	if(Role == ROLE_Authority)
@@ -193,6 +194,8 @@ void ASTrackerBot::Tick(float DeltaTime)
 
 void ASTrackerBot::NotifyActorBeginOverlap(AActor * OtherActor)
 {
+	Super::NotifyActorBeginOverlap(OtherActor);
+
 	if (!bStartedSelfDestruction && !bExploded)
 	{
 		ASCharacter* PlayerPawn = Cast<ASCharacter>(OtherActor);
