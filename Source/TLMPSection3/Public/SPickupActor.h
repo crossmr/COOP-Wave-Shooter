@@ -7,6 +7,8 @@
 #include "SPickupActor.generated.h"
 
 class USphereComponent;
+class ASPowerUpActor;
+class UDecalComponent;
 
 UCLASS()
 class TLMPSECTION3_API ASPickupActor : public AActor
@@ -30,8 +32,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UDecalComponent* DecalComp;
 
+	UPROPERTY(EditDefaultsOnly, Category = "PickupActor")
+	TSubclassOf<ASPowerUpActor> PowerUpClass;
 
+	ASPowerUpActor* PowerUpInstance;
 
+	UPROPERTY(EditDefaultsOnly, Category = "PickupActor")
+	float CoolDownDuration;
+
+	FTimerHandle TimerHandle_RespawnTimer;
+
+	UFUNCTION()
+	void Respawn();
 	
 	
 };

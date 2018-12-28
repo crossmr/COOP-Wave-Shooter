@@ -3,6 +3,9 @@
 #include "SPickupActor.h"
 #include "Components/SphereComponent.h"
 #include "Components/DecalComponent.h"
+#include "Engine/World.h"
+#include "SPowerUpActor.h"
+#include "TimerManager.h"
 
 
 // Sets default values
@@ -17,19 +20,43 @@ ASPickupActor::ASPickupActor()
 	DecalComp->DecalSize = FVector(64.0f, 75.0f, 75.0f);
 	DecalComp->SetupAttachment(RootComponent);
 
+
+
 }
 
 void ASPickupActor::NotifyActorBeginOverlap(AActor * OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
-	//Power up player if available
+	if (PowerUpInstance)
+	{
+		PowerUpInstance->ActivatePowerup();
+		PowerUpInstance = nullptr;
+
+		//set timer to respawn pickup after use
+		GetWorldTimerManager().SetTimer(TimerHandle_RespawnTimer, this, &ASPickupActor::Respawn, CoolDownDuration);
+	}
 }
 
 // Called when the game starts or when spawned
 void ASPickupActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Respawn();
 	
+}
+
+void ASPickupActor::Respawn()
+{
+	if (PowerUpClass == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PowerUpClass has not been set on %s"), *GetName());
+		return;
+	}
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	PowerUpInstance = GetWorld()->SpawnActor<ASPowerUpActor>(PowerUpClass, GetTransform(), SpawnParams);
 }
 
