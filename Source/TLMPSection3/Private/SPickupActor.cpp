@@ -20,6 +20,7 @@ ASPickupActor::ASPickupActor()
 	DecalComp->DecalSize = FVector(64.0f, 75.0f, 75.0f);
 	DecalComp->SetupAttachment(RootComponent);
 
+	CoolDownDuration = 10.0f; //set a sensible default
 
 
 }
