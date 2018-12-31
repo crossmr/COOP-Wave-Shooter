@@ -28,8 +28,7 @@ public:
 
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+
 
 	/*Time Between Power up ticks*/
 	UPROPERTY(EditDefaultsOnly, Category = "Powerups")
@@ -47,7 +46,13 @@ protected:
 	UFUNCTION()
 	void OnTickPowerup();
 
+	//Allows state to be replicated to client
+	UPROPERTY(ReplicatedUsing=OnRep_PowerupActive)
+	bool bIsPowerupActive;
+	
+	UFUNCTION()
+	void OnRep_PowerupActive();
 
-	
-	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Powerups")
+	void OnPowerupStateChanged(bool bNewIsActive);
 };

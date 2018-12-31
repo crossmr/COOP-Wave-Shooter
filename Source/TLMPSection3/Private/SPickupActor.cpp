@@ -22,6 +22,8 @@ ASPickupActor::ASPickupActor()
 
 	CoolDownDuration = 10.0f; //set a sensible default
 
+	SetReplicates(true);
+
 
 }
 
@@ -29,7 +31,7 @@ void ASPickupActor::NotifyActorBeginOverlap(AActor * OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
-	if (PowerUpInstance)
+	if (Role == ROLE_Authority && PowerUpInstance)
 	{
 		PowerUpInstance->ActivatePowerup();
 		PowerUpInstance = nullptr;
@@ -44,7 +46,10 @@ void ASPickupActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Respawn();
+	if (Role == ROLE_Authority)
+	{
+		Respawn();
+	}
 	
 }
 
