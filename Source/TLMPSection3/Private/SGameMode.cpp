@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "TLMPSection3GameModeBase.h"
+#include "SGameMode.h"
 
 
 

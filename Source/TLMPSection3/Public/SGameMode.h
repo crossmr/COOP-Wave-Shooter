@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "TLMPSection3GameModeBase.generated.h"
+#include "SGameMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TLMPSECTION3_API ATLMPSection3GameModeBase : public AGameModeBase
+class TLMPSECTION3_API ASGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 	
