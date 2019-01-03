@@ -37,6 +37,11 @@ void USHealthComponent::Heal(float HealAmount)
 	 
 }
 
+float USHealthComponent::GetHealth() const
+{
+	return Health;
+}
+
 // Called when the game starts
 void USHealthComponent::BeginPlay()
 {
