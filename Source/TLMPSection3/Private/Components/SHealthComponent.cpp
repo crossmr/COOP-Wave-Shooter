@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "Math/UnrealMathUtility.h"
 #include "Net/UnrealNetwork.h"
+#include "SGameMode.h"
+#include "Engine/World.h"
 
 
 
@@ -20,6 +22,8 @@ USHealthComponent::USHealthComponent()
 	DefaultHealth = 100.f;
 
 	SetIsReplicated(true);
+
+	bIsDead = false;
 }
 
 
@@ -68,7 +72,7 @@ void USHealthComponent::OnRep_Health(float OldHealth)
 
 void USHealthComponent::HandleTakeAnyDamage(AActor * DamagedActor, float Damage, const UDamageType * DamageType, AController * InstigatedBy, AActor * DamageCauser)
 {
-	if (Damage <= 0.f)
+	if (Damage <= 0.f || bIsDead)
 	{
 		return;
 	}
@@ -78,7 +82,18 @@ void USHealthComponent::HandleTakeAnyDamage(AActor * DamagedActor, float Damage,
 
 	OnHealthChanged.Broadcast(this, Health, Damage, DamageType, InstigatedBy, DamageCauser);
 
+	bIsDead = Health <= 0.0f;
+
 	//UE_LOG(LogTemp, Warning, TEXT("Damage Taken: %s"), *FString::SanitizeFloat(Health));
+	if (bIsDead)
+	{
+		ASGameMode* GM = Cast<ASGameMode>(GetWorld()->GetAuthGameMode());
+		if (GM)
+		{
+			GM->OnActorKilled.Broadcast(GetOwner(), DamageCauser, InstigatedBy);
+		}
+	}
+	
 }
 
 void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
