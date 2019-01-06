@@ -45,6 +45,8 @@ protected:
 
 	void SetWaveState(EWaveState NewState);
 
+	void RespawnDeadPlayers();
+
 	FTimerHandle TimeHandle_BotSpawner;
 
 	FTimerHandle TimerHandle_NextWaveStart;
